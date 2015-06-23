@@ -1,2 +1,2 @@
 # vCommander
-A jvascript library for voice driven web apps
+A javascript library for voice driven web apps
