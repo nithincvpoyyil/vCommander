@@ -2,9 +2,146 @@
 <html>
 
 <head>
+    <style>
+        body {
+            height: 100%;
+            width: 100%;
+        }
+        .pointer {
+            position: absolute;
+            top: calc(50% - 15px);
+            left: calc(50% - 50px);
+            display: block;
+            height: 37px;
+            width: 113px;
+            background-color: #0c3e5d;
+            -webkit-animation: anim_name 3s linear 0s infinite alternate;
+            -moz-animation: anim_name 3s linear 0s infinite alternate;
+            -o-animation: anim_name 3s linear 0s infinite alternate;
+            animation: anim_name 3s linear 0s infinite alternate;
+        }
+        @-webkit-keyframes anim_name {
+            from {
+                border-radius: 0;
+                box-shadow: 0 0 1px rgba(29, 17, 100, 0.5);
+            }
+            to {
+                bac border-radius: 30px;
+                box-shadow: 0 0 20px rgba(29, 17, 100, 1);
+            }
+        }
+        @-moz-keyframes anim_name {
+            from {
+                border-radius: 0;
+                box-shadow: 0 0 1px rgba(29, 17, 100, 0.5);
+            }
+            to {
+                border-radius: 30px;
+                box-shadow: 0 0 20px rgba(29, 17, 100, 1);
+            }
+        }
+        @-o-keyframes anim_name {
+            from {
+                border-radius: 0;
+                box-shadow: 0 0 1px rgba(29, 17, 100, 0.5);
+            }
+            to {
+                border-radius: 30px;
+                box-shadow: 0 0 20px rgba(29, 17, 100, 1);
+            }
+        }
+        @keyframes anim_name {
+            from {
+                border-radius: 0;
+                box-shadow: 0 0 5px rgba(29, 17, 100, 0.5);
+            }
+            to {
+                border-radius: 30px;
+                box-shadow: 0 0 40px rgba(29, 17, 100, 1);
+            }
+        }
+    }
+    </style>
     <script src="vCommander.js"></script>
+    <script src="lib/jquery-1.11.3.min.js"></script>
 </head>
 
-<body></body>
+<body>
+    <span class="pointer"></span>
+    <script>
+        var getVcommands = function () {
+
+            var a = new vCommander.vCommand();
+            var b = new vCommander.vCommand();
+            var c = new vCommander.vCommand();
+            var d = new vCommander.vCommand();
+
+            a.commandId = "top";
+            a.commands = ["top", "topper", "tap", "tip", "to"];
+            a.action = function () {
+                console.log("top ok");
+                $(".pointer").animate({
+                    opacity: 1,
+                    top: $(".pointer").position().left - 40 + "px"
+                }, 500);
+            };
+            a.replay = "start ok";
+            a.success = function () {
+                console.log("success");
+            };
+            a.error = function (e) {
+                console.log("Error" + e);
+            };
+
+            b.commandId = "left";
+            b.commands = ["left", "let", "letter", "left most"];
+            b.action = function () {
+                console.log("left ok");
+                $(".pointer").animate({
+                    opacity: 1,
+                    left: $(".pointer").position().left - 40 + "px"
+                }, 500);
+            };
+            b.replay = "";
+            b.success = function () {};
+            b.error = function () {};
+
+            c.commandId = "right";
+            c.action = function () {
+                console.log("right ok");
+                $(".pointer").animate({
+                    opacity: 1,
+                    left: $(".pointer").position().left + 40 + "px"
+                }, 500);
+            };
+            c.commands = ["right", "rite", "write", "white", "vine"];
+            c.replay = "";
+            c.success = function () {};
+            c.error = function () {};
+
+            d.commandId = "down";
+            d.commands = ["down", "don", "dawn", "drown", "bottom"];
+            d.action = function () {
+                console.log("down ok");
+                $(".pointer").animate({
+                    opacity: 1,
+                    top: $(".pointer").position().left + 40 + "px"
+                }, 500);
+            };
+            d.replay = "";
+            d.success = function () {};
+            d.error = function () {};
+            return [a, b, c, d];
+        };
+
+        $(document).ready(function () {
+            window.vcEngine = new vCommander.vCommanderEngine({
+                commandSeries: getVcommands(),
+                delay: 100
+            });
+
+        });
+    </script>
+</body>
 
 </html>

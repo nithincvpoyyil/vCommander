@@ -35,7 +35,8 @@ var vCommander;
             var self = this;
             self.util = new vCommander.vCommanderUtil();
             self.forceAbort = false;
-            self.isCommandExecuting = false;
+            self.isFinalExecuting = false;
+            self.isInterExecuting = false;
             self.commandCollection = {};
             self.commandCollection.array = [];
             self.commandCollection.keys = [];
@@ -138,30 +139,41 @@ var vCommander;
             var timeoutId = null;
             self.logger("raw transcript >> " + transcript);
 
-            if (keys.lastIndexOf(transcript) !== -1) {
-                commandId = self.commandCollection.array[transcript];
-                vCommand = self.config.commandSeries[commandId];
-                if (!self.isCommandExecuting) {
-                    self.isCommandExecuting = true;
-                    console.log(vCommand, "inter");
-                    timeoutId = setTimeout(function () {
-                        self.isCommandExecuting = false;
-                        clearTimeout(timeoutId);
-                    }, 100);
-                }
+            transcriptWordArray = transcript.split(" ");
 
-            } else if (transcript && usePrediction && isFinal) {
-                for (i = 0; i < numberOfKeys; i++) {
-                    if (self.util.levenshteinDistance(transcript, keys[i]) > 0.8) {
+            if (!isFinal) {
+                transcriptWordArray.forEach(function (transcriptWord) {
+                    if (keys.lastIndexOf(transcript) !== -1) {
                         commandId = self.commandCollection.array[transcript];
                         vCommand = self.config.commandSeries[commandId];
-                        if (!self.isCommandExecuting) {
-                            self.isCommandExecuting = true;
-                            console.log(vCommand, "final");
+                        if (!self.isInterExecuting) {
+                            self.isInterExecuting = true;
+                            console.log("inter");
+                            vCommand.action.call(self);
                             timeoutId = setTimeout(function () {
-                                self.isCommandExecuting = false;
+                                self.isInterExecuting = false;
                                 clearTimeout(timeoutId);
-                            }, 500);
+                            }, 100);
+                        }
+
+                    }
+                });
+
+            }
+
+            if (transcript && usePrediction && isFinal) {
+                for (i = 0; i < numberOfKeys; i++) {
+                    if (self.util.levenshteinDistance(transcript, keys[i]) > 0.8) {
+                        commandId = self.commandCollection.array[keys[i]];
+                        vCommand = self.config.commandSeries[commandId];
+                        if (!self.isFinalExecuting) {
+                            self.isFinalExecuting = true;
+                            console.log("final");
+                            vCommand.action.call(self);
+                            timeoutId = setTimeout(function () {
+                                self.isFinalExecuting = false;
+                                clearTimeout(timeoutId);
+                            }, 100);
                         }
 
 
@@ -207,6 +219,8 @@ var vCommander;
             }
 
             var timeout = setTimeout(function () {
+                self.isFinalExecuting = false;
+                self.isInterExecuting = false;
                 self.resetAll();
                 clearTimeout(timeout);
             }, 1000);
@@ -216,22 +230,23 @@ var vCommander;
             var self = this;
             self.isListening = true;
             self.listeningStartTime = Date.now();
-            self.logger("listening -- Start");
+            self.logger("listening --> Start");
         };
 
         vCommanderEngine.prototype.onEnd = function () {
 
             var self = this;
-            self.logger("listening -- end");
+            self.logger("listening --> end");
             self.isListening = false;
             var currentTime = Date.now();
             var timeDiffernce = Date.now() - self.listeningStartTime;
-
+            self.isFinalExecuting = false;
+            self.isInterExecuting = false;
             if (timeDiffernce > 1500) {
                 if (!self.forceAbort) {
                     self.listeningStartTime = Date.now();
                     self.recognition.start();
-                    self.logger("listening -- end-->restart -- time difference--" + timeDiffernce);
+                    self.logger("listening >> end-->restart-->time difference-->", timeDiffernce);
                 }
 
             } else {
@@ -337,60 +352,3 @@ var vCommander;
     vCommander.vCommanderConfig = vCommanderConfig;
     vCommander.vCommand = vCommand;
 })(vCommander || (vCommander = {}));
-
-
-//--------------------------------------------------------------------------------------------//
-
-var getVcommands = function () {
-
-    var a = new vCommander.vCommand();
-    var b = new vCommander.vCommand();
-    var c = new vCommander.vCommand();
-    var d = new vCommander.vCommand();
-
-    a.commandId = "start";
-    a.commands = ["start", "art", "smart", "cart", "sat"];
-    a.action = function () {
-        console.log("start ok")
-    };
-    a.replay = "start ok";
-    a.success = function () {
-        console.log("success");
-    };
-    a.error = function (e) {
-        console.log("Error" + e);
-    };
-
-    b.commandId = "left";
-    b.action = function () {
-        console.log("left ok")
-    };
-    b.replay = "";
-    b.success = function () {};
-    b.error = function () {};
-
-    c.commandId = "right";
-    c.action = function () {
-        console.log("right ok")
-    };
-    c.commands = ["right", "rite", "write", "white", "vine"];
-    c.replay = "";
-    c.success = function () {};
-    c.error = function () {};
-
-    d.commandId = "down";
-    d.action = function () {
-        console.log("down ok")
-    };
-    d.replay = "";
-    d.success = function () {};
-    d.error = function () {};
-
-    console.log([a, b, c, d], "Go and get it, things will never comes for you, if it comes to you it may be too late to get it");
-
-    return [a, b, c, d];
-};
-window.vcEngine = new vCommander.vCommanderEngine({
-    commandSeries: getVcommands(),
-    delay: 100
-});
