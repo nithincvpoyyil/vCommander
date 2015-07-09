@@ -42,15 +42,28 @@ var vCommander;
             self.commandCollection.keys = [];
             self.config = this.util.extendObject(vCommander.vCommanderConfig, config);
             self.config.commandSeries = {};
+            self.config.useInterMediate = true;
+            self.config.commandKeys = [];
+            self.config.isLogEnabled = true;
+
             config.commandSeries.forEach(function (vCommand) {
                 if (vCommand.commands && vCommand.commands.length) {
                     vCommand.commands.forEach(function (cmd) {
                         cmd = cmd.toString();
                         self.commandCollection.array[cmd] = vCommand.commandId;
-                        self.commandCollection.keys.push(cmd);
+
                     });
                 }
                 self.config.commandSeries[vCommand.commandId] = vCommand;
+            });
+
+            config.commandSeries.forEach(function (vCommand) {
+                if (vCommand.commands) {
+                    for (var i = 0; i < vCommand.commands.length; i++) {
+                        self.config.commandSeries[vCommand.commands[i]] = vCommand;
+                        self.config.commandKeys.push(vCommand.commands[i]);
+                    }
+                }
             });
 
             self.init();
@@ -75,7 +88,9 @@ var vCommander;
         };
 
         vCommanderEngine.prototype.logger = function (messege) {
-            console.info("@log: ", messege);
+            if (this.config.isLogEnabled) {
+                console.info("@log: ", messege);
+            }
         };
 
         vCommanderEngine.prototype.createVCEngine = function (engineConfig) {
@@ -131,57 +146,60 @@ var vCommander;
             var self = this;
             var vCommand = null;
             var commandId = null;
-            var keys = self.commandCollection.keys;
+            var commandKeys = self.config.commandKeys;
+            var commandSeries = self.config.commandSeries;
             var usePrediction = true;
             var i = 0;
             var lDistance = 0;
-            var numberOfKeys = (keys.length) ? keys.length : 0;
             var timeoutId = null;
+            var useInterMediate = self.config.useInterMediate;
             self.logger("raw transcript >> " + transcript);
 
-            transcriptWordArray = transcript.split(" ");
-
-            if (!isFinal) {
-                transcriptWordArray.forEach(function (transcriptWord) {
-                    if (keys.lastIndexOf(transcript) !== -1) {
-                        commandId = self.commandCollection.array[transcript];
-                        vCommand = self.config.commandSeries[commandId];
+            var transcriptWordArray = transcript.split(" ");
+            var transcriptWord;
+            if (!isFinal && useInterMediate) {
+                for (i = 0; i < transcriptWordArray.length; i++) {
+                    transcriptWord = transcriptWordArray[i];
+                    if (commandSeries[transcriptWord]) {
+                        vCommand = commandSeries[transcriptWord];
                         if (!self.isInterExecuting) {
                             self.isInterExecuting = true;
-                            console.log("inter");
+
                             vCommand.action.call(self);
                             timeoutId = setTimeout(function () {
                                 self.isInterExecuting = false;
                                 clearTimeout(timeoutId);
                             }, 100);
                         }
-
+                        break;
                     }
-                });
-
+                }
             }
 
             if (transcript && usePrediction && isFinal) {
+                var numberOfKeys = (commandKeys.length) ? commandKeys.length : 0;
+
                 for (i = 0; i < numberOfKeys; i++) {
-                    if (self.util.levenshteinDistance(transcript, keys[i]) > 0.8) {
-                        commandId = self.commandCollection.array[keys[i]];
-                        vCommand = self.config.commandSeries[commandId];
+
+                    var test = self.util.levenshteinDistance(transcript, commandKeys[i]);
+
+                    if (test > 0.5) {
+
+                        vCommand = commandSeries[commandKeys[i]];
                         if (!self.isFinalExecuting) {
                             self.isFinalExecuting = true;
-                            console.log("final");
                             vCommand.action.call(self);
                             timeoutId = setTimeout(function () {
                                 self.isFinalExecuting = false;
                                 clearTimeout(timeoutId);
                             }, 100);
                         }
-
-
                     }
                 }
             }
 
         };
+
         vCommanderEngine.prototype.listening = function (event) {
 
             var self = this;
@@ -265,26 +283,42 @@ var vCommander;
             this.logger("startup");
             this.startListen();
         };
+
         vCommanderEngine.prototype.onSuccess = function () {};
+
         vCommanderEngine.prototype.onFail = function () {};
+
         vCommanderEngine.prototype.addCommands = function () {};
+
         vCommanderEngine.prototype.removeCommands = function () {};
 
         return vCommanderEngine;
     })();
 
     var vCommanderUtil = (function () {
-        function vCommanderUtil() {}
+        function vCommanderUtil() {};
         vCommanderUtil.prototype.isChrome = function () {
             return /chrom(e|ium)/.test(navigator.userAgent.toLowerCase());
         };
+
         vCommanderUtil.prototype.isSupportWebSpeechApi = function () {
             return (!("webkitSpeechRecognition" in window)) ? false : true;
         };
+
+        vCommanderUtil.prototype.isOnline = function () {
+            if (window.navigator && window.navigator.onLine) {
+                return true;
+            } else {
+                return false;
+            }
+
+        };
+
         vCommanderUtil.prototype.isSupportWebVoiceDetectionApi = function () {
             return (("speechSynthesis" in window) && ("SpeechSynthesisEvent" in window) &&
                 ("SpeechSynthesisUtterance" in window)) ? true : false;
         };
+
         vCommanderUtil.prototype.extendObject = function (object1, object2) {
             for (var key in object2) {
                 object1[key] = object2[key];
@@ -342,8 +376,6 @@ var vCommander;
                 return 1 - distance / string2.length;
             }
         };
-
-
         return vCommanderUtil;
     })();
 
