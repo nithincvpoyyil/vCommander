@@ -72,13 +72,15 @@ var vCommander;
         vCommanderEngine.prototype.init = function () {
             var self = this;
             if (!self.util.isChrome()) {
-                throw new Error(10001, "Not chrome browser");
+                self.logger("Not chrome browser");
             } else if (!self.util.isSupportWebSpeechApi()) {
-                throw new Error(10002, "No Speeech Api available");
+                self.logger("No Speeech Api available");
             } else if (!self.util.isSupportWebVoiceDetectionApi()) {
-                throw new Error(10003, " No voice detetction API present");
+                self.logger("No voice detetction API present");
+            } else if (!self.util.isOnline()) {
+                self.logger("Network is not connected to internet");
             } else {
-                this.startup();
+                self.startup();
             }
         };
 
