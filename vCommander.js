@@ -3,6 +3,9 @@
 var vCommander;
 (function (vCommander) {
 
+    /**
+     * Command format for the vCommander
+     */
     var vCommand = (function () {
         var GenerateVCommand = function () {
             return {
@@ -29,6 +32,9 @@ var vCommander;
 
     })();
 
+    /**
+     * vCommander Engine responsible for managing/inititializing speech api
+     */
     var vCommanderEngine = (function () {
 
         function vCommanderEngine(config) {
@@ -69,6 +75,10 @@ var vCommander;
             self.init();
         }
 
+        /**
+         * Init function to vCommander Engine
+         * Detects browser compactibility
+         */
         vCommanderEngine.prototype.init = function () {
             var self = this;
             if (!self.util.isChrome()) {
@@ -84,17 +94,27 @@ var vCommander;
             }
         };
 
+        /**
+         * Reset vCommander Engine
+         */
         vCommanderEngine.prototype.resetAll = function () {
             this.recognition = null;
             this.createVCEngine();
         };
 
+        /**
+         * logger for the module
+         */
         vCommanderEngine.prototype.logger = function (messege) {
             if (this.config.isLogEnabled) {
                 console.info("@log: ", messege);
             }
         };
 
+        /**
+         * Code creates vCommnader Engine using configuration passed.
+         * Reset all changes if called again
+         */
         vCommanderEngine.prototype.createVCEngine = function (engineConfig) {
             if (!Date.now) {
                 Date.now = function now() {
@@ -129,6 +149,9 @@ var vCommander;
             };
         };
 
+        /**
+         * Function to start listen the voice engine
+         */
         vCommanderEngine.prototype.startListen = function () {
             this.createVCEngine();
             if (this.recognition && this.recognition.start) {
@@ -137,6 +160,9 @@ var vCommander;
             }
         };
 
+        /**
+         * Function to stop listen and abort listening
+         */
         vCommanderEngine.prototype.stopListen = function () {
             if (this.recognition && this.recognition.abort) {
                 this.forceAbort = true;
@@ -144,6 +170,9 @@ var vCommander;
             }
         };
 
+        /**
+         * Function to process transcript recieved from listening
+         */
         vCommanderEngine.prototype.processTranscript = function (transcript, isFinal) {
             var self = this;
             var vCommand = null;
@@ -202,6 +231,9 @@ var vCommander;
 
         };
 
+        /**
+         * Function for listening call back from vCommander Engine
+         */
         vCommanderEngine.prototype.listening = function (event) {
 
             var self = this;
@@ -226,6 +258,9 @@ var vCommander;
             }
         };
 
+        /**
+         *  Callback function on error of listening
+         */
         vCommanderEngine.prototype.onError = function (event) {
             var self = this;
             switch (event.error) {
@@ -246,6 +281,9 @@ var vCommander;
             }, 1000);
         };
 
+        /**
+         * Callback function on start of vCommander engine
+         */
         vCommanderEngine.prototype.onStart = function () {
             var self = this;
             self.isListening = true;
@@ -253,6 +291,9 @@ var vCommander;
             self.logger("listening --> Start");
         };
 
+        /**
+         * Callback function of vCommander peech recognition on end
+         */
         vCommanderEngine.prototype.onEnd = function () {
 
             var self = this;
@@ -297,6 +338,10 @@ var vCommander;
         return vCommanderEngine;
     })();
 
+
+    /** 
+     * Utility function to detect browser compactability, network reachble and more.
+     */
     var vCommanderUtil = (function () {
         function vCommanderUtil() {};
         vCommanderUtil.prototype.isChrome = function () {
@@ -328,7 +373,11 @@ var vCommander;
             return object1;
         };
 
-        // https://en.wikibooks.org/wiki/Algorithm_Implementation/Strings/Levenshtein_distance#JavaScript
+        /**
+         * Levenshtein_distance string distance algorithm for string matching.
+         * Refereance: https://en.wikibooks.org/wiki/Algorithm_Implementation/-
+         * Strings/Levenshtein_distance#JavaScript
+         */
         vCommanderUtil.prototype.levenshteinBaseAlgorithm = function (a, b) {
 
             if (a.length === 0) return b.length;
@@ -364,7 +413,9 @@ var vCommander;
             return matrix[b.length][a.length];
         };
 
-        // Return an edit distance from 0 to 1
+        /**
+         * edit distance calculation is changed to 0 - 1 probability.
+         */
         vCommanderUtil.prototype.levenshteinDistance = function (string1, string2) {
             if (string1 === null && string2 === null) return 0;
             if (string1 === null || string2 === null) return 0;
